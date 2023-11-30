@@ -1,5 +1,6 @@
 #pragma once
 #ifndef UTILS_H
+#define UTILS_H
 
 //常用头文件
 #include"vec3.h"
@@ -45,6 +46,29 @@ inline double random_double()
 inline double random_double(const double& min, const double& max)
 {
     return min + (max - min) * random_double();
+}
+
+//生成[0,1]的随机向量
+inline vec3 random_vector()
+{
+    return vec3(random_double(), random_double(), random_double());
+}
+
+// 生成在[min, max]的随机向量
+inline vec3 random_vector(const double& min, const double& max)
+{
+    return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+}
+
+// 生成单位球内的随机一点
+inline point3 random_point_in_unit_sphere()
+{
+    while (true)
+    {
+        auto p = random_vector(-1, 1);
+        if (p.length_squared() >= 1)continue;
+        return p;
+    }
 }
 
 #endif // !UTILS_H

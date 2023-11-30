@@ -1,16 +1,23 @@
 #include"utils.h"
 #include"hittable_list.h"
 #include"sphere.h"
-
+#include"camera.h"
 
 #include <iostream>
 
 color ray_color(ray& r, const hittable_list& world)
 {
+    auto RR = 0.8;//俄罗斯轮盘赌的生存概率
     hit_record rec;
-    if (world.hit(r, 0, infinity, rec)>0)
+    // 这里的t的下界设为0.001是为了防止一些光线弹射到物体上得到的t非常接近0，比如可能出现0.000001这样的值
+    if (world.hit(r, 0.001, infinity, rec))
     {
-        return (color(1,1,1) + rec.n) * 0.5;//范围变化为[0,1]
+        if (random_double() > RR)return color(0, 0, 0);//概率停止反射
+        // 随机选择漫反射光线弹射方向
+        point3 target = rec.p + rec.n + random_point_in_unit_sphere();
+        ray bounce = ray(rec.p, target - rec.p);
+        // 只有0.5的光线发生下一次弹射，其他的被吸收
+        return 0.5 * ray_color(bounce, world) / RR;//要除以RR才能得到正常的期望颜色
     }
     else {
         vec3 unit_direction = normalize(r.direction());
@@ -21,43 +28,36 @@ color ray_color(ray& r, const hittable_list& world)
 }
 
 int main() {
+    // 相机
+    camera cam;
 
     // 图片
     const auto aspect_ratio = 16.0 / 9.0;//16:9
     const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
+    const int sample_per_pixel = 100;
 
-    //世界
+    // 世界
     hittable_list world;
     world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
     world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
 
+    // 渲染
+    std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
-
-    // 相机
-    auto viewport_height = 2.0;//视口高
-    auto viewport_width = viewport_height * aspect_ratio;//视口宽
-    auto focal_length = 1.0;//焦距
-
-    //坐标轴和原点
-    auto origin = point3(0, 0, 0);
-    auto horizontal = vec3(viewport_width, 0, 0);
-    auto vertical = vec3(0, viewport_height, 0);
-    // (-viewport_width/2, -viewport_height/2, -focal_length)
-    auto lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3(0, 0, focal_length);
-
-    //渲染
-
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     //左上到右下
     for (int j = image_height - 1; j >= 0; --j) {
         std::cerr << "\rScanlines remining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
-            auto u = double(i) / (image_width - 1);
-            auto v = double(j) / (image_height - 1);
-            ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
-            color pixel_color = ray_color(r, world);
-            write_color(std::cout, pixel_color);
+            color pixel_color(0, 0, 0);
+            for (int s = 0; s < sample_per_pixel; ++s)
+            {
+                auto u = (i + random_double()) / (image_width - 1);
+                auto v = (j + random_double()) / (image_height - 1);
+                ray r = cam.get_ray(u, v);
+                pixel_color += ray_color(r, world);
+            }
+            write_color(std::cout, pixel_color, sample_per_pixel);
         }
     }
     std::cerr << "\nDone\n";

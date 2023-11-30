@@ -1,5 +1,6 @@
 #pragma once
 #ifndef SPHERE_H
+#define SPHERE_H
 #include"hittable.h"
 //球体类，派生自hittable基类
 //构造函数
