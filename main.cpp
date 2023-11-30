@@ -1,15 +1,23 @@
-#include"color.h"
-#include"vec3.h"
-#include"ray.h"
+#include"utils.h"
+#include"hittable_list.h"
+#include"sphere.h"
+
 
 #include <iostream>
 
-color ray_color(ray& r)
+color ray_color(ray& r, const hittable_list& world)
 {
-    vec3 unit_direction = normalize(r.direction());
-    // y归一化为[-1,1]之后再映射到[0,1]作为混合系数
-    auto t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
+    hit_record rec;
+    if (world.hit(r, 0, infinity, rec)>0)
+    {
+        return (color(1,1,1) + rec.n) * 0.5;//范围变化为[0,1]
+    }
+    else {
+        vec3 unit_direction = normalize(r.direction());
+        // y归一化为[-1,1]之后再映射到[0,1]作为混合系数
+        auto t = 0.5 * (unit_direction.y() + 1.0);
+        return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
+    }
 }
 
 int main() {
@@ -18,6 +26,13 @@ int main() {
     const auto aspect_ratio = 16.0 / 9.0;//16:9
     const int image_width = 400;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
+
+    //世界
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
+    world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
+
+
 
     // 相机
     auto viewport_height = 2.0;//视口高
@@ -41,7 +56,7 @@ int main() {
             auto u = double(i) / (image_width - 1);
             auto v = double(j) / (image_height - 1);
             ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
-            color pixel_color = ray_color(r);
+            color pixel_color = ray_color(r, world);
             write_color(std::cout, pixel_color);
         }
     }
