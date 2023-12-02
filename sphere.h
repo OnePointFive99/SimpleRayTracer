@@ -11,10 +11,11 @@
 class sphere : public hittable
 {
 public:
-    point3 center;
-    double radius;
+    point3 center;//球心
+    double radius;//半径
+    shared_ptr<material> mat_ptr; //材质
     sphere(){}
-    sphere(const point3& c, const double& r):center(c), radius(r) {}
+    sphere(const point3& c, const double& r, const shared_ptr<material>& m):center(c), radius(r), mat_ptr(m) {}
     virtual bool hit(const ray& r, double t_min, double t_max, hit_record& record) const override;
 };
 
@@ -45,6 +46,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& record) c
     record.p = r.at(t);
     vec3 o2p = normalize(r.at(t) - center);//计算球心到点的向量
     record.setFaceNormal(o2p, r);
+    record.mat_ptr = mat_ptr;
     return true;
 }
 #endif // !SPHERE_H

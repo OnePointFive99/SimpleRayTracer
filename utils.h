@@ -9,6 +9,8 @@
 #include<random>
 
 using std::make_shared;
+using std::shared_ptr;
+
 
 //定义常量
 const double infinity = std::numeric_limits<double>::infinity();//double的正无穷
@@ -70,6 +72,39 @@ inline point3 random_point_in_unit_sphere()
         return p;
     }
 }
+
+// 生成单位球面上的随机一点
+inline point3 random_point_on_unit_sphere()
+{
+    return normalize(random_point_in_unit_sphere());
+}
+
+// 半球内随机取点
+inline point3 random_point_in_hemisphere(const vec3& n)
+{
+    vec3 p = random_point_in_unit_sphere();
+    if (dot(p, n) < 0)return -p;//不在同一半球
+    else {
+        return p;
+    }
+}
+
+// 镜面反射方向
+inline vec3 mirror_reflect(const vec3& v, const vec3& n)
+{
+    vec3 b = dot(-v, n) * n;
+    return v + 2 * b;
+}
+
+//计算折射光线
+inline vec3 refract(const vec3& R, const vec3& n, double etai_over_etat)
+{
+    auto cos_theta = fmin(dot(-R, n), 1.0);
+    vec3 r_prep = etai_over_etat * (R + cos_theta * n);
+    vec3 r_parallel = -sqrt(fabs(1.0 - r_prep.length_squared())) * n;
+    return r_prep + r_parallel;
+}
+
 
 #endif // !UTILS_H
 

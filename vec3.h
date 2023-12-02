@@ -49,6 +49,13 @@ public:
     {
         return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
     }
+
+    // 是否接近0
+    bool near_zero() const
+    {
+        const auto s = 1e-9;
+        return (fabs(e[0] < s) && (fabs(e[1] < s) && fabs(e[2] < s)));
+    }
 };
 //声明了vec3的两个别名：3D point 和color
 using point3 = vec3;
@@ -113,6 +120,8 @@ inline vec3 normalize(vec3 v)
 {
     return v / v.length();
 }
+
+
 
 
 #endif // !VEC3_H
